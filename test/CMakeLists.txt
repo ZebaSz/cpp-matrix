@@ -1,0 +1,5 @@
+include(GoogleTest-CMake.txt)
+set(TEST_FILES matrix_test.cpp)
+add_executable(correrTests ${TEST_FILES})
+target_include_directories(correrTests PUBLIC ${HEADERS_DIR})
+target_link_libraries(correrTests gtest_main gtest)
