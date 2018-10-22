@@ -14,9 +14,14 @@ public:
 
     sparse_matrix(sparse_matrix&&) noexcept = default;
 
+    template < typename Other >
+    sparse_matrix(const matrix_expression<T, Other>& other) noexcept :  h(other.height()), w(other.width()), _def()  {
+        this->copy_from(other);
+    }
+
     sparse_matrix(size_t height, size_t width, const T& def = static_cast<T>(0)) : h(height), w(width), _def(def) {}
 
-    T internal_get(size_t row, size_t col) const override {
+    T get(size_t row, size_t col) const override {
         auto it = grid.find(coord(row, col));
         if(it == grid.end()) {
             return _def;
@@ -24,7 +29,7 @@ public:
         return it->second;
     }
 
-    void internal_set(size_t row, size_t col, const T& val) override {
+    void set(size_t row, size_t col, const T& val) override {
         coord key(row, col);
         if(val == static_cast<T>(0)) {
             grid.erase(key);
@@ -33,22 +38,22 @@ public:
         }
     }
 
-    size_t internal_height() const override {
+    size_t height() const override {
         return h;
     }
 
-    size_t internal_width() const override {
+    size_t width() const override {
         return w;
     }
 
     // special generators
 
     static sparse_matrix zero(size_t size) {
-        return sparse_matrix(size, size, static_cast<T>(0));
+        return sparse_matrix(size, size);
     }
 
     static sparse_matrix identity(size_t size) {
-        sparse_matrix mx(size, size, static_cast<T>(0));
+        sparse_matrix mx(size, size);
         for (size_t i = 0; i < size; ++i) {
             mx[i][i] = 1;
         }

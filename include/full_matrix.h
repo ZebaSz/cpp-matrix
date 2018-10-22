@@ -16,13 +16,15 @@ public:
 
     full_matrix(full_matrix&&) noexcept = default;
 
-    template < typename Derived >
-    explicit full_matrix(const matrix<T, Derived>& other) noexcept : matrix<T, full_matrix<T>>(other) {}
+    template < typename Other >
+    full_matrix(const matrix_expression<T, Other>& other) noexcept : _grid(other.height(), row(other.width(), {}))  {
+        this->copy_from(other);
+    }
 
-    full_matrix(size_t h, size_t w, T def = static_cast<T>(0)) : _grid(h, row(w, def)) {}
+    full_matrix(size_t h, size_t w, T def = {}) : _grid(h, row(w, def)) {}
 
     template < size_t H, size_t W >
-    explicit full_matrix(const std::array<std::array<T, W>, H>& arr) : _grid(H, row(W, static_cast<T>(0))) {
+    explicit full_matrix(const std::array<std::array<T, W>, H>& arr) : _grid(H, row(W, {})) {
         static_assert(H > 0 && W > 0, "Arrays for matrix initialization must be-non empty");
         init(arr, H, W);
     }
@@ -33,25 +35,22 @@ public:
         }
     }
 
-    template <typename Iterable >
-    explicit full_matrix(const Iterable& other) : _grid(other) {}
-
     full_matrix(const std::initializer_list<vector<T>> list) : _grid(list) {
     }
 
-    T internal_get(size_t row, size_t col) const override {
+    T get(size_t row, size_t col) const override {
         return _grid[row][col];
     }
 
-    void internal_set(size_t row, size_t col, const T& val) override {
+    void set(size_t row, size_t col, const T& val) override {
         _grid[row][col] = val;
     }
 
-    size_t internal_height() const override {
+    size_t height() const override {
         return _grid.size();
     }
 
-    size_t internal_width() const override {
+    size_t width() const override {
         if(_grid.empty()) {
             return 0;
         }
@@ -77,13 +76,12 @@ private:
 
     template < typename Iterable >
     void init(const Iterable& container, size_t height, size_t width) {
-        _grid.reserve(height);
+        _grid.resize(height);
         for (auto i = 0; i < height; ++i) {
-            _grid[i].reserve(width);
+            _grid[i].resize(width);
             for (auto j = 0; j < width; ++j) {
                 (*this)[i][j] = container[i][j];
             }
         }
     }
-
 };

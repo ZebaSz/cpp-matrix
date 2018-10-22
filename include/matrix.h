@@ -1,18 +1,21 @@
 #pragma once
 
-#include <cstddef>
 #include <cmath>
 #include <memory>
 #include <type_traits>
-#include "vectors.h"
+#include "matrix_expr.h"
 
 template < typename T, typename Derived >
-class matrix {
+class matrix : public matrix_expression<T, Derived> {
 public:
 
     using value_type = T;
     using reference = T&;
     using const_reference = const T&;
+
+    using matrix_expression<T, Derived>::get;
+    using matrix_expression<T, Derived>::height;
+    using matrix_expression<T, Derived>::width;
 
     class iterator;
     class const_iterator;
@@ -48,7 +51,7 @@ public:
         }
 
         explicit operator vector<T>() const {
-            vector<T> v(size(), static_cast<T>(0));
+            vector<T> v(size(), {});
             for (size_t i = 0; i < size(); ++i) {
                 v[i] = _matrix->get(_row, i);
             }
@@ -211,40 +214,6 @@ public:
         return const_row(this, pos);
     }
 
-    // common operations
-
-    value_type get(size_t row, size_t col) const {
-        if(transposed) {
-            return internal_get(col, row);
-        } else {
-            return internal_get(row, col);
-        }
-    }
-
-    void set(size_t row, size_t col, const_reference val) {
-        if(transposed) {
-            internal_set(col, row, val);
-        } else {
-            internal_set(row, col, val);
-        }
-    }
-
-    size_t width() const {
-        if(transposed) {
-            return internal_height();
-        } else {
-            return internal_width();
-        }
-    }
-
-    size_t height() const {
-        if(transposed) {
-            return internal_width();
-        } else {
-            return internal_height();
-        }
-    }
-
     iterator begin() {
         return iterator(this);
     }
@@ -267,153 +236,6 @@ public:
 
     const_row_list rows() const {
         return const_row_list(this);
-    }
-
-    Derived dotProduct(const_reference a) const {
-        Derived result(height(), width());
-
-        for (size_t i = 0; i < height(); i++)
-            for (size_t j = 0; j < width(); j++)
-                result[i][j] = get(i,j) * a;
-
-        return result;
-    }
-
-    Derived dotProduct(const matrix &b) const {
-        Derived c(height(), b.width());
-
-        // matrices must be non-empty
-        assert(height() > 0 && width() > 0);
-        assert(b.height() > 0 && b.width() > 0);
-        // input dimensions must match
-        assert(width() == b.height());
-        // output dimensions must match
-        assert(c.height() == height());
-        assert(c.width() == b.width());
-
-        for (size_t i = 0; i < c.height(); ++i) {
-            for (size_t j = 0; j < c.width(); ++j) {
-                T val = 0;
-                for (size_t k = 0; k < b.height(); ++k) {
-                     val += get(i,k) * b.get(k, j);
-                }
-                c[i][j] = val;
-            }
-        }
-        return c;
-    }
-
-    vector<T> dotProduct(const vector<T> &b) const {
-        vector<T> c(height(), 0);
-        // matrices must be non-empty
-        assert(height() > 0 && width() > 0);
-        assert(b.size() > 0);
-        // input dimensions must match
-        assert(width() == b.size());
-        // output dimensions must match
-        assert(c.size() == height());
-
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j < width(); ++j) {
-                c[i] += get(i,j) * b[j];
-            }
-        }
-        return c;
-    }
-
-    template < typename Other >
-    Derived operator+(const matrix<T, Other> &b) const {
-        Derived c(height(), width());
-
-        // matrices must be non-empty
-        assert(height() > 0 && width() > 0);
-        // input dimensions must match
-        assert(height() == b.height());
-        assert(width() == b.width());
-        // output dimensions must match
-        assert(height() == c.height());
-        assert(width() == c.width());
-
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j < width(); ++j) {
-                c[i][j] = get(i,j) + b.get(i,j);
-            }
-        }
-        return c;
-    }
-
-    template < typename Other >
-    Derived operator-(const matrix<T, Other> &b) const {
-        Derived c(height(), width());
-
-        // matrices must be non-empty
-        assert(height() > 0 && width() > 0);
-        // input dimensions must match
-        assert(height() == b.height());
-        assert(width() == b.width());
-        // output dimensions must match
-        assert(height() == c.height());
-        assert(width() == c.width());
-
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j < width(); ++j) {
-                c[i][j] = get(i,j) - b.get(i,j);
-            }
-        }
-        return c;
-    }
-
-    Derived operator*(const_reference a) const {
-        Derived result(*this);
-
-        for (auto r : result)
-            for (auto c : r)
-                c *= a;
-
-        return result;
-    }
-
-    void inplaceTranspose() {
-        transposed = !transposed;
-    }
-
-    Derived transpose() const {
-        Derived t(width(), height());
-        // matrix must be non-empty
-        assert(height() > 0 && width() > 0);
-        // output dimensions must match
-        assert(height() == t.width());
-        assert(width() == t.height());
-
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j < width(); ++j) {
-                t[j][i] = get(i,j);
-            }
-        }
-        return t;
-    }
-
-    Derived transposedProduct() const {
-        Derived t(height(), height());
-        // matrix must be non-empty
-        assert(height() > 0 && width() > 0);
-        // output dimensions must match
-        assert(height() == t.width());
-        assert(height() == t.height());
-
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j <= i; ++j) {
-                auto val = static_cast<T>(0);
-                for (size_t k = 0; k < width(); ++k) {
-                    val += get(i,k) * get(j,k);
-                }
-                t[i][j] = val;
-                if (i != j) {
-                    t[j][i] = val;
-                }
-            }
-        }
-        return t;
     }
 
     double infinityNorm() const {
@@ -519,42 +341,17 @@ public:
         return true;
     }
 
-    template < typename Other >
-    bool operator==(const matrix<T, Other>& other) const {
-        if(height() != other.height() || width() != other.width()) {
-            return false;
-        }
-        for (size_t i = 0; i < height(); ++i) {
-            for (size_t j = 0; j < width(); ++j) {
-                if(get(i,j) != other.get(i,j)) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
 protected:
     matrix() noexcept = default;
 
+    virtual void set(size_t row, size_t col, const T& val) = 0;
+
     template < typename Other >
-    explicit matrix(const matrix<T, Other>& other) noexcept {
-        for (int i = 0; i < other.height(); ++i) {
-            for (int j = 0; j < width(); ++j) {
-                (*this)[i][j] = other[i][j];
+    void copy_from(const matrix_expression<T, Other>& other) noexcept {
+        for (size_t i = 0; i < other.height(); ++i) {
+            for (size_t j = 0; j < other.width(); ++j) {
+                (*this)[i][j] = other.get(i, j);
             }
         }
     }
-
-    // subclass-defined core functions
-    virtual value_type internal_get(size_t row, size_t col) const = 0;
-
-    virtual void internal_set(size_t row, size_t col, const_reference val) = 0;
-
-    virtual size_t internal_width() const = 0;
-
-    virtual size_t internal_height() const = 0;
-
-private:
-    bool transposed = false;
 };

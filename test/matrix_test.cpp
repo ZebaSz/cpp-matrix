@@ -7,7 +7,7 @@
 
 constexpr int m_h = 5;
 
-TEST(matrix_test, fullIdentity) {
+TEST(matrix_test, full_identity) {
     full_matrix<int> m (m_h, m_h, 0);
     for (size_t i = 0; i < m_h; ++i) {
         m[i][i] = 1;
@@ -23,7 +23,7 @@ TEST(matrix_test, fullIdentity) {
     }
 }
 
-TEST(matrix_test, sparseIdentity) {
+TEST(matrix_test, sparse_identity) {
     sparse_matrix<int> m (m_h, m_h, 0);
     for (size_t i = 0; i < m_h; ++i) {
         m[i][i] = 1;
@@ -47,8 +47,8 @@ TEST(matrix_test, square_array) {
     arr.fill(arr_row);
     full_matrix<int> m (arr);
     ASSERT_EQ(m.height(), m_h);
+    ASSERT_EQ(m.width(), m_h);
     for (size_t i = 0; i < m.height(); ++i) {
-        ASSERT_EQ(m[i].size(), m_h);
         for (size_t j = 0; j < m.width(); ++j) {
             ASSERT_EQ(m[i][j], value);
         }
@@ -56,14 +56,14 @@ TEST(matrix_test, square_array) {
 }
 
 
-TEST(matrix_test, dotProduct) {
+TEST(matrix_test, dot_product) {
     full_matrix<int> a = {
             {2, 0, 1},
             {3, 0, 0},
             {5, 1, 1}
     };
 
-    full_matrix<int> b= {
+    full_matrix<int> b = {
             {1, 0, 1},
             {1, 2, 1},
             {1, 1, 0}
@@ -75,9 +75,7 @@ TEST(matrix_test, dotProduct) {
             {7, 3, 6}
     };
 
-    auto result = a.dotProduct(b);
-
-    ASSERT_EQ(result, expected);
+    ASSERT_EQ(a.dotProduct(b), expected);
 
     full_matrix<int> i3 = full_matrix<int>::identity(3);
 
@@ -106,7 +104,7 @@ TEST(matrix_test, dotProduct) {
 }
 
 
-TEST(matrix_test, sum) {
+TEST(matrix_test, sum_diff) {
     full_matrix<int> a = {
             {2, 0, 1},
             {3, 0, 0},
@@ -128,6 +126,25 @@ TEST(matrix_test, sum) {
     auto result = a + b;
 
     ASSERT_EQ(result, expected);
+
+    auto orig = a + b - b;
+
+    ASSERT_EQ(orig, a);
+}
+
+
+TEST(matrix_test, scalar_product) {
+    full_matrix<int> a = {
+            {2, 0, 1},
+            {3, 0, 0},
+            {5, 1, 1}
+    };
+
+    auto mul = a * 2;
+
+    auto two_sum = a + a;
+
+    ASSERT_EQ(mul, two_sum);
 }
 
 TEST(matrix_test, norm) {
@@ -170,23 +187,7 @@ TEST(matrix_test, traspose){
     ASSERT_EQ(notSquared_m, notSquared_transposed_transposedM);
 }
 
-TEST(matrix_test, inplaceTranspose) {
-    full_matrix<int> m (m_h, m_h);
-
-    int value = 1;
-    for (size_t i = 0; i < m_h; ++i) {
-        for (size_t j = 0; j < m_h; ++j) {
-            m[i][j] = value;
-            value++;
-        }
-    }
-
-    auto m_t = m.transpose();
-    m.inplaceTranspose();
-    ASSERT_EQ(m, m_t);
-}
-
-TEST(matrix_test, isLowerTriangular) {
+TEST(matrix_test, lower_triangular) {
     int value = 1;
     std::array<std::array<int, m_h>, m_h> arr {};
     for (size_t i = 0; i < m_h; ++i) {
@@ -203,7 +204,7 @@ TEST(matrix_test, isLowerTriangular) {
     ASSERT_TRUE(m.isLowerTriangular());
 }
 
-TEST(matrix_test, isUpperTriangular) {
+TEST(matrix_test, upper_triangular) {
     int value = 1;
     std::array<std::array<int, m_h>, m_h> arr {};
     for (size_t i = 0; i < m_h; ++i) {
@@ -218,20 +219,6 @@ TEST(matrix_test, isUpperTriangular) {
     }
     full_matrix<int> m (arr);
     ASSERT_TRUE(m.isUpperTriangular());
-}
-
-TEST(matrix_test, trasposeProduct) {
-    int value = 1;
-    std::array<std::array<int, m_h>, m_h> arr {};
-    for (size_t i = 0; i < m_h; ++i) {
-        for (size_t j = 0; j < m_h; ++j) {
-            arr[i][j] = value;
-            value++;
-        }
-    }
-
-    full_matrix<int> m (arr);
-    ASSERT_EQ(m.dotProduct(m.transpose()), m.transposedProduct());
 }
 
 #pragma clang diagnostic pop
