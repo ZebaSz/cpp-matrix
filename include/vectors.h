@@ -24,22 +24,20 @@ namespace vectors {
     template<typename T>
     vector<T> subtract(const vector<T> &a, const vector<T> &b) {
         assert(a.size() == b.size());
-        vector<T> c(a);
+        vector<T> c;
         std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(c), std::minus<T>());
         return c;
     }
 
     template<typename T>
-    T innerProduct(const vector<T> &a, const vector<T> &b) {
+    T inner_product(const vector<T> &a, const vector<T> &b) {
         assert(a.size() == b.size());
-        vector<T> c(a);
-        std::transform(a.begin(), a.end(), b.begin(), std::back_inserter(c), std::multiplies<T>());
-        return std::accumulate(c.begin(), c.end(), 0, std::plus<T>());
+        return std::inner_product(a.begin(), a.end(), b.begin(), 0);
     }
 
     template<typename T>
     double twoNormSquared(const vector<T> &v) {
-        return innerProduct(v, v);
+        return inner_product(v, v);
     }
 
     template<typename T>
